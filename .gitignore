@@ -1,0 +1,9 @@
+idl_project_venv/
+venv/
+data/vehicle_data_raw/
+__pycache__/
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
