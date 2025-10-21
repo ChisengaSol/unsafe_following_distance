@@ -1,6 +1,6 @@
 # Unsafe Following Distance Detection
 
-This project is a computer vision system designed to detect vehicles, track them, and analyze their following distance to identify and flag unsafe driving behavior in real-time. It uses a deep learning object detector and a tracking algorithm to calculate Time-to-Collision (TTC) from video footage.
+This project is a computer vision system designed to detect vehicles, track them, and analyze their following distance to identify and flag unsafe driving behavior. It uses a deep learning object detector and a tracking algorithm to calculate Time-to-Collision (TTC) from video footage.
 
 ## Getting Started
 
