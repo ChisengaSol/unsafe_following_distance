@@ -120,49 +120,62 @@ def visualize_images(image_dir, label_dir, image_filenames, class_names, num_ima
     plt.tight_layout()
     plt.show()
 
+def _convert_pascal_voc_to_pixels(box, img_w, img_h):
+    """Helper to convert normalized pascal_voc to pixel coordinates."""
+    xmin, ymin, xmax, ymax = box
+    return int(xmin * img_w), int(ymin * img_h), int(xmax * img_w), int(ymax * img_h)
 
 def visualize_augmented_batch(data_loader, class_names, num_images=4):
     """
-    Fetches one batch from the data_loader and displays it in a horizontal grid.
+    Visualizes one batch from the DataLoader to show augmentations.
+    This version is updated to handle cases with single bounding boxes.
     """
-    batch_size = data_loader.batch_size
+    try:
+        images, targets = next(iter(data_loader))
+    except StopIteration:
+        print("DataLoader is empty.")
+        return
+
+    batch_size = len(images)
     if num_images > batch_size:
         num_images = batch_size
-
-    images, targets = next(iter(data_loader))
 
     fig, axes = plt.subplots(1, num_images, figsize=(num_images * 5, 5))
     if num_images == 1:
         axes = [axes]
 
     for i in range(num_images):
+        # Convert tensor from (C, H, W) to (H, W, C)
         image = images[i].permute(1, 2, 0).numpy()
-        image = (image * 255).astype(np.uint8)
-        vis_image = image.copy()
+        
+        # Un-normalize for display
+        mean = np.array([0.485, 0.456, 0.406])
+        std = np.array([0.229, 0.224, 0.225])
+        image = (image * std + mean).clip(0, 1)
+        
+        target = targets[i]
+        boxes = target['boxes']
+        labels = target['labels']
+        
+        if boxes.dim() == 1:
+            boxes = boxes.unsqueeze(0)
 
-        boxes = targets[i]["boxes"]
-        labels = targets[i]["labels"]
-        height, width, _ = vis_image.shape
-
-        boxes[:, [0, 2]] *= width
-        boxes[:, [1, 3]] *= height
+        img_h, img_w, _ = image.shape
+        display_image = (image * 255).astype(np.uint8).copy()
 
         for box, label_idx in zip(boxes, labels):
-            xmin, ymin, xmax, ymax = map(int, box)
-            label_name = class_names[label_idx]
-            cv2.rectangle(vis_image, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
-            cv2.putText(
-                vis_image,
-                label_name,
-                (xmin, ymin - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2,
-            )
+            # Convert normalized pascal_voc to pixel coordinates
+            x1, y1, x2, y2 = _convert_pascal_voc_to_pixels(box, img_w, img_h)
+            
+            class_name = class_names[label_idx]
+            
+            cv2.rectangle(display_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(display_image, class_name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
-        axes[i].imshow(vis_image)
-        axes[i].axis("off")
+        ax = axes[i]
+        ax.imshow(display_image)
+        ax.set_title(f"Augmented Sample {i+1}")
+        ax.axis('off')
 
     plt.tight_layout()
     plt.show()
