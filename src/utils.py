@@ -3,6 +3,7 @@ import random
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import config
 
 
 def list_files_in_subfolders(base_dir, limit=5):
@@ -179,3 +180,14 @@ def visualize_augmented_batch(data_loader, class_names, num_images=4):
 
     plt.tight_layout()
     plt.show()
+
+def apply_ipm(point_pixel, frame_height=1080):
+    """
+    Convert Pixel Coordinate (u, v) to Real World (x, y) in meters.
+    Uses linear scaling defined in config.py.
+    """
+    u, v = point_pixel
+    x_meters = u / config.PIXELS_PER_METER_X
+    y_meters = (frame_height - v) / config.PIXELS_PER_METER_Y
+    
+    return (x_meters, y_meters)
